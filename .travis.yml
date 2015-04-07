@@ -1,3 +1,5 @@
 language: go
 
-script: "go build -o bin/gherkin-generate-ast ./gherkin-generate-ast && echo 'Feature: test' | bin/gherkin-generate-ast"
+script:
+  - git clone --single-branch --branch master --depth 1 https://github.com/cucumber/gherkin3.git shallow-gherkin3
+  - GHERKIN_BASE=shallow-gherkin3 make
