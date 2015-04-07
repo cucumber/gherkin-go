@@ -1,4 +1,5 @@
 language: go
+mono: latest
 
 script:
   - jq --version
