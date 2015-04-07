@@ -1,5 +1,6 @@
 language: go
 
 script:
+  - jq --version
   - git clone --single-branch --branch master --depth 1 https://github.com/cucumber/gherkin3.git shallow-gherkin3
   - GHERKIN_BASE=shallow-gherkin3 make
