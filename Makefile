@@ -58,12 +58,12 @@ acceptance/testdata/%.feature.errors.ndjson: testdata/%.feature testdata/%.featu
 
 acceptance/testdata/%.feature.source.ndjson: testdata/%.feature testdata/%.feature.source.ndjson bin/gherkin
 	mkdir -p `dirname $@`
-	bin/gherkin --json --no-ast --no-pickles $< | jq --sort-keys -f remove_empty.jq > $@
+	bin/gherkin --json --no-ast --no-pickles $< | jq --sort-keys --compact-output -f remove_empty.jq > $@
 	diff --unified <(jq "." $<.source.ndjson) <(jq "." $@)
 
 acceptance/testdata/%.feature.pickles.ndjson: testdata/%.feature testdata/%.feature.pickles.ndjson bin/gherkin
 	mkdir -p `dirname $@`
-	bin/gherkin --json --no-source --no-ast $< | jq --sort-keys -f remove_empty.jq > $@
+	bin/gherkin --json --no-source --no-ast $< | jq --sort-keys --compact-output -f remove_empty.jq > $@
 	diff --unified <(jq "." $<.pickles.ndjson) <(jq "." $@)
 
 parser.go: gherkin.berp parser.go.razor berp/berp.exe

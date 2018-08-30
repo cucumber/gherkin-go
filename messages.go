@@ -15,7 +15,7 @@ import (
 
 func Messages(
 	paths []string,
-	sourceStream io.Reader,
+	messageStream io.Reader,
 	language string,
 	includeSource bool,
 	includeGherkinDocument bool,
@@ -27,31 +27,38 @@ func Messages(
 	var result []messages.Wrapper
 	var err error
 
-	handleMessage := func(result []messages.Wrapper, message *messages.Wrapper) ([]messages.Wrapper, error) {
-		if outStream != nil {
-			if json {
+	var handleMessage func(result []messages.Wrapper, message *messages.Wrapper) ([]messages.Wrapper, error)
+
+	if outStream != nil {
+		bufStream := bufio.NewWriter(outStream)
+		defer bufStream.Flush()
+
+		if json {
+			handleMessage = func(result []messages.Wrapper, message *messages.Wrapper) ([]messages.Wrapper, error) {
 				ma := jsonpb.Marshaler{}
 				msgJson, err := ma.MarshalToString(message)
 				if err != nil {
 					return result, err
 				}
-				out := bufio.NewWriter(outStream)
-				out.WriteString(msgJson)
-				out.WriteString("\n")
-			} else {
+				bufStream.WriteString(msgJson)
+				bufStream.WriteString("\n")
+				return result, err
+			}
+		} else {
+			handleMessage = func(result []messages.Wrapper, message *messages.Wrapper) ([]messages.Wrapper, error) {
 				bytes, err := proto.Marshal(message)
 				if err != nil {
 					return result, err
 				}
 				outStream.Write(proto.EncodeVarint(uint64(len(bytes))))
 				outStream.Write(bytes)
+				return result, err
 			}
-
-		} else {
-			result = append(result, *message)
 		}
-
-		return result, err
+	} else {
+		handleMessage = func(result []messages.Wrapper, message *messages.Wrapper) ([]messages.Wrapper, error) {
+			return append(result, *message), err
+		}
 	}
 
 	processSource := func(source *messages.Source) error {
@@ -113,12 +120,16 @@ func Messages(
 						},
 					})
 
-					status := messages.Status_PASSED
+					var status messages.Status
 					var message string
 
-					if strings.Contains(strings.ToLower(step.Text), "failed") {
-						status = messages.Status_FAILED
-						message = fmt.Sprintf("ERROR: %s:%d:%d", step.Text, step.Locations[0].Line, step.Locations[0].Column)
+					for statusCode, statusName := range messages.Status_name {
+						if strings.Contains(strings.ToUpper(step.Text), statusName) {
+							status = messages.Status(statusCode)
+							if status == messages.Status_FAILED {
+								message = fmt.Sprintf("ERROR: %s:%d:%d", step.Text, step.Locations[0].Line, step.Locations[0].Column)
+							}
+						}
 					}
 
 					result, err = handleMessage(result, &messages.Wrapper{
@@ -148,7 +159,7 @@ func Messages(
 	}
 
 	if len(paths) == 0 {
-		reader := gio.NewDelimitedReader(sourceStream, math.MaxInt32)
+		reader := gio.NewDelimitedReader(messageStream, math.MaxInt32)
 		for {
 			wrapper := &messages.Wrapper{}
 			err := reader.ReadMsg(wrapper)

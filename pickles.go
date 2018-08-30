@@ -103,6 +103,7 @@ func compileScenarioOutline(pickles []*messages.Pickle, scenario *messages.Scena
 			locations = append(locations, values.Location)
 
 			pickles = append(pickles, &messages.Pickle{
+				Id:        makePickleId(uri, locations),
 				Uri:       uri,
 				Steps:     pickleSteps,
 				Tags:      tags,
@@ -124,6 +125,7 @@ func compileScenario(pickles []*messages.Pickle, backgroundSteps []*messages.Pic
 	locations := make([]*messages.Location, 0)
 	locations = append(locations, scenario.Location)
 	pickles = append(pickles, &messages.Pickle{
+		Id:        makePickleId(uri, locations),
 		Uri:       uri,
 		Steps:     steps,
 		Tags:      tags,
@@ -211,4 +213,17 @@ func interpolate(s string, variableCells, valueCells []*messages.TableCell) stri
 	}
 
 	return s
+}
+
+func makePickleId(uri string, locations []*messages.Location) string {
+	lines := collect(locations, func(loc *messages.Location) string { return fmt.Sprint(loc.Line) })
+	return fmt.Sprintf("%s:%s", uri, strings.Join(lines, ":"))
+}
+
+func collect(locations []*messages.Location, f func(loc *messages.Location) string) []string {
+	result := make([]string, len(locations))
+	for i, item := range locations {
+		result[i] = f(item)
+	}
+	return result
 }

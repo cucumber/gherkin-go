@@ -6,7 +6,6 @@ will print them as JSON (useful for testing/debugging)
 package main
 
 import (
-	"bufio"
 	b64 "encoding/base64"
 	"flag"
 	"fmt"
@@ -42,9 +41,6 @@ func main() {
 
 	paths := flag.Args()
 
-	stdout := bufio.NewWriter(os.Stdout)
-	defer stdout.Flush()
-
 	_, err := gherkin.Messages(
 		paths,
 		os.Stdin,
@@ -52,7 +48,7 @@ func main() {
 		!*noSource,
 		!*noAst,
 		!*noPickles,
-		stdout,
+		os.Stdout,
 		*printJson,
 		*fakeResultsFlag,
 	)
