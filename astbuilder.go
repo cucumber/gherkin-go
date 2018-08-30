@@ -13,6 +13,7 @@ type AstBuilder interface {
 type astBuilder struct {
 	stack    []*astNode
 	comments []*messages.Comment
+	uri      string
 }
 
 func (t *astBuilder) Reset() {
@@ -89,8 +90,9 @@ func newAstNode(rt RuleType) *astNode {
 	}
 }
 
-func NewAstBuilder() AstBuilder {
+func NewAstBuilder(uri string) AstBuilder {
 	builder := new(astBuilder)
+	builder.uri = uri
 	builder.comments = []*messages.Comment{}
 	builder.push(newAstNode(RuleTypeNone))
 	return builder
@@ -336,6 +338,7 @@ func (t *astBuilder) transformNode(node *astNode) (interface{}, error) {
 			doc.Feature = feature
 		}
 		doc.Comments = t.comments
+		doc.Uri = t.uri
 		return doc, nil
 	}
 	return node, nil

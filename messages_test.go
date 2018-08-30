@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/cucumber/cucumber-messages-go"
 	gio "github.com/gogo/protobuf/io"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -34,7 +35,6 @@ func TestMessagesWithStdin(t *testing.T) {
 	}
 
 	writer.WriteMsg(wrapper)
-	writer.WriteMsg(wrapper)
 
 	wrappers, err := Messages(
 		nil,
@@ -45,11 +45,9 @@ func TestMessagesWithStdin(t *testing.T) {
 		true,
 		nil,
 		false,
+		true,
 	)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(wrappers) != 8 {
-		t.Fatalf("%d != %d", len(wrappers), 8)
-	}
+
+	require.NoError(t, err)
+	require.Equal(t, 12, len(wrappers))
 }

@@ -22,6 +22,7 @@ func Messages(
 	includePickles bool,
 	outStream io.Writer,
 	json bool,
+	fakeResults bool,
 ) ([]messages.Wrapper, error) {
 	var result []messages.Wrapper
 	var err error
@@ -61,9 +62,8 @@ func Messages(
 				},
 			})
 		}
-		doc, err := ParseGherkinDocumentForLanguage(strings.NewReader(source.Data), language)
+		doc, err := ParseGherkinDocumentForLanguage(strings.NewReader(source.Data), source.Uri, language)
 		if errs, ok := err.(parseErrors); ok {
-			// expected parse errors
 			for _, err := range errs {
 				if pe, ok := err.(*parseError); ok {
 					result, err = handleMessage(result, pe.asAttachment(source.Uri))
@@ -84,10 +84,62 @@ func Messages(
 		}
 
 		if includePickles {
-			for _, pickle := range Pickles(*doc, source.Uri) {
+			for _, pickle := range Pickles(*doc) {
 				result, err = handleMessage(result, &messages.Wrapper{
 					Message: &messages.Wrapper_Pickle{
 						Pickle: pickle,
+					},
+				})
+			}
+		}
+
+		if fakeResults {
+			for _, pickle := range Pickles(*doc) {
+				result, err = handleMessage(result, &messages.Wrapper{
+					Message: &messages.Wrapper_TestCaseStarted{
+						TestCaseStarted: &messages.TestCaseStarted{
+							PickleId: pickle.Id,
+						},
+					},
+				})
+
+				for index, step := range pickle.Steps {
+					result, err = handleMessage(result, &messages.Wrapper{
+						Message: &messages.Wrapper_TestStepStarted{
+							TestStepStarted: &messages.TestStepStarted{
+								PickleId: pickle.Id,
+								Index:    uint32(index),
+							},
+						},
+					})
+
+					status := messages.Status_PASSED
+					var message string
+
+					if strings.Contains(strings.ToLower(step.Text), "failed") {
+						status = messages.Status_FAILED
+						message = fmt.Sprintf("ERROR: %s:%d:%d", step.Text, step.Locations[0].Line, step.Locations[0].Column)
+					}
+
+					result, err = handleMessage(result, &messages.Wrapper{
+						Message: &messages.Wrapper_TestStepFinished{
+							TestStepFinished: &messages.TestStepFinished{
+								PickleId: pickle.Id,
+								Index:    uint32(index),
+								TestResult: &messages.TestResult{
+									Status:  status,
+									Message: message,
+								},
+							},
+						},
+					})
+				}
+
+				result, err = handleMessage(result, &messages.Wrapper{
+					Message: &messages.Wrapper_TestCaseFinished{
+						TestCaseFinished: &messages.TestCaseFinished{
+							PickleId: pickle.Id,
+						},
 					},
 				})
 			}

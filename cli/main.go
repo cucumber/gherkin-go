@@ -14,12 +14,13 @@ import (
 	"os"
 )
 
-var noSource = flag.Bool("no-source", false, "Skip gherkin source events")
-var noAst = flag.Bool("no-ast", false, "Skip gherkin AST events")
-var noPickles = flag.Bool("no-pickles", false, "Skip gherkin Pickle events")
+var noSource = flag.Bool("no-source", false, "Skip GherkinSource messages")
+var noAst = flag.Bool("no-ast", false, "Skip GherkinDocument messages")
+var noPickles = flag.Bool("no-pickles", false, "Skip Pickle messages")
 var printJson = flag.Bool("json", false, "Print messages as JSON instead of protobuf")
 var versionFlag = flag.Bool("version", false, "print version")
 var dialectsFlag = flag.Bool("dialects", false, "print dialects as JSON")
+var fakeResultsFlag = flag.Bool("fake-results", false, "Emit fake results messages")
 var defaultDialectFlag = flag.String("default-dialect", "en", "the default dialect")
 
 // Set during build with -ldflags
@@ -53,6 +54,7 @@ func main() {
 		!*noPickles,
 		stdout,
 		*printJson,
+		*fakeResultsFlag,
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to parse Gherkin: %+v\n", err)

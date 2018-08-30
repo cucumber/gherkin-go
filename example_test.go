@@ -28,13 +28,13 @@ func ExampleParseGherkinDocument() {
 `
 	r := strings.NewReader(input)
 
-	gherkinDocument, err := ParseGherkinDocument(r)
+	gherkinDocument, err := ParseGherkinDocument(r, "test.feature")
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "%s\n", err)
 		return
 	}
 	feature := gherkinDocument.Feature
-	//fmt.Fprintf(os.Stdout, "Location: %v\n", feature.Location)
+	fmt.Fprintf(os.Stdout, "Uri: %v\n", gherkinDocument.Uri)
 	fmt.Fprintf(os.Stdout, "Keyword: %+v\n", feature.Keyword)
 	fmt.Fprintf(os.Stdout, "Name: %+v\n", feature.Name)
 	fmt.Fprintf(os.Stdout, "Children: length: %+v\n", len(feature.Children))
@@ -52,6 +52,7 @@ func ExampleParseGherkinDocument() {
 	fmt.Fprintf(os.Stdout, "    Steps: length: %+v\n", len(scenario2.Steps))
 
 	// Output:
+	// Uri: test.feature
 	// Keyword: Feature
 	// Name: Tagged Examples
 	// Children: length: 2
@@ -65,7 +66,7 @@ func ExampleParseGherkinDocument() {
 
 func ExampleParseGherkinDocument_multiple() {
 
-	builder := NewAstBuilder()
+	builder := NewAstBuilder("test.feature")
 	parser := NewParser(builder)
 	parser.StopAtFirstError(false)
 	matcher := NewMatcher(GherkinDialectsBuildin())
@@ -113,7 +114,7 @@ func ExampleParseGherkinDocument_multiple() {
 
 func ExampleParseGherkinDocument_error() {
 
-	builder := NewAstBuilder()
+	builder := NewAstBuilder("test.feature")
 	parser := NewParser(builder)
 	parser.StopAtFirstError(false)
 	matcher := NewMatcher(GherkinDialectsBuildin())
@@ -177,19 +178,20 @@ func ExampleParseGherkinDocument_dialect() {
 	input := "Egenskap: i18n support"
 	r := strings.NewReader(input)
 
-	gherkinDocument, err := ParseGherkinDocumentForLanguage(r, "no")
+	gherkinDocument, err := ParseGherkinDocumentForLanguage(r, "test.feature", "no")
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "%s\n", err)
 		return
 	}
 	feature := gherkinDocument.Feature
-	//fmt.Fprintf(os.Stdout, "Location: %+v\n", feature.Location)
+	fmt.Fprintf(os.Stdout, "Uri: %+v\n", gherkinDocument.Uri)
 	fmt.Fprintf(os.Stdout, "Keyword: %+v\n", feature.Keyword)
 	fmt.Fprintf(os.Stdout, "Name: %+v\n", feature.Name)
 	fmt.Fprintf(os.Stdout, "Children: length: %+v\n", len(feature.Children))
 
 	// Output:
 	//
+	// Uri: test.feature
 	// Keyword: Egenskap
 	// Name: i18n support
 	// Children: length: 0

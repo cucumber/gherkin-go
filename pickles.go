@@ -7,14 +7,14 @@ import (
 	"unicode/utf8"
 )
 
-func Pickles(gherkinDocument messages.GherkinDocument, uri string) []*messages.Pickle {
+func Pickles(gherkinDocument messages.GherkinDocument) []*messages.Pickle {
 	pickles := make([]*messages.Pickle, 0)
 	if gherkinDocument.Feature == nil {
 		return pickles
 	}
 	language := gherkinDocument.Feature.Language
 
-	pickles = compileFeature(pickles, *gherkinDocument.Feature, uri, language)
+	pickles = compileFeature(pickles, *gherkinDocument.Feature, gherkinDocument.Uri, language)
 	return pickles
 }
 
